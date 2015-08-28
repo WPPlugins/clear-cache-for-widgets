@@ -2,11 +2,14 @@
 /*
 Plugin Name: Clear Cache For Me
 Plugin URI: http://mymonkeydo.com/caching-with-widgets
-Description: Purges all cache on WT3, WP Super Cache, or WPEngine when updating the menus or widgets.  Also adds a button with optional instructions to the dashboard to clear the cache.
+Description: Purges all cache on WPEngine, W3 Total Cache, WP Super Cache, WP Fastest Cache when updating widgets, menus, settings.  Also adds a button with optional instructions to the dashboard to clear the cache.
 Author: Webhead LLC
 Author URI: http://webheadcoder.com 
-Version: 0.6.2
+Version: 0.7
 */
+
+
+require_once( 'clear-cache-for-action.php' );
 
 // locale
 function ccfm_plugins_loaded() {
@@ -38,6 +41,12 @@ function ccfm_admin_init() {
         //detect nav menu changes
         add_action( 'wp_update_nav_menu', 'ccfm_clear_cache_for_menus' );
 
+        //detect settings page changes
+        add_filter( 'pre_set_transient_settings_errors', 'ccfm_clear_cache_for_settings' );
+
+        //detect ContactForm7 changes
+        add_action( 'wpcf7_save_contact_form', 'ccfm_clear_cache_for_cf7' );
+
         do_action( 'ccfm_admin_init' );
     }
 }
@@ -47,7 +56,10 @@ add_action( 'admin_init', 'ccfm_admin_init' ); // not 'init'
  * Return true if known caching systems exists.
  */
 function ccfm_supported_caching_exists() {
-    $supported = function_exists( 'w3tc_pgcache_flush' ) || function_exists( 'wp_cache_clean_cache' ) || class_exists( 'WpeCommon' );
+    $supported = function_exists( 'w3tc_pgcache_flush' ) 
+               || function_exists( 'wp_cache_clean_cache' )
+               || class_exists( 'WpeCommon' )
+               || method_exists( 'WpFastestCache', 'deleteCache' );
     return apply_filters( 'ccfm_supported_caching_exists', $supported );
 }
 
@@ -55,6 +67,10 @@ function ccfm_supported_caching_exists() {
  * Clear the caches!
  */
 function ccfm_clear_cache_for_me( $source ) {
+    global $wp_fastest_cache;
+
+    do_action( 'ccfm_clear_cache_for_me_before', $source );
+
     // if W3 Total Cache is being used, clear the cache
     if ( function_exists( 'w3tc_pgcache_flush' ) ) { 
         w3tc_pgcache_flush(); 
@@ -65,41 +81,21 @@ function ccfm_clear_cache_for_me( $source ) {
         wp_cache_clean_cache( $file_prefix );
     }
     else if ( class_exists( 'WpeCommon' ) ) {
-        WpeCommon::purge_memcached();
-        WpeCommon::clear_maxcdn_cache();
-        WpeCommon::purge_varnish_cache();   
+        //be extra careful, just in case 3rd party changes things on us
+        if ( method_exists( 'WpeCommon', 'purge_memcached' ) ) {
+            WpeCommon::purge_memcached();
+        }
+        if ( method_exists( 'WpeCommon', 'purge_memcached' ) ) {  
+            WpeCommon::clear_maxcdn_cache();
+        }
+        if ( method_exists( 'WpeCommon', 'purge_memcached' ) ) {
+            WpeCommon::purge_varnish_cache();   
+        }
+    }
+    else if ( method_exists( 'WpFastestCache', 'deleteCache' ) && !empty( $wp_fastest_cache ) ) {
+        $wp_fastest_cache->deleteCache();
     }
     do_action( 'ccfm_clear_cache_for_me', $source );
-}
-
-/**
- * Clear the caches for menus.
- */
-function ccfm_clear_cache_for_menus() {
-    ccfm_clear_cache_for_me( 'menu' );
-}
-
-/**
- * Clear the caches for widgets.  Thanks to Ov3rfly
- */
-function ccfm_clear_cache_for_widgets_wp_ajax_action() {
-    // wp-admin/admin-ajax.php
-    // 'widgets-order', 'save-widget'
-    ccfm_clear_cache_for_me( 'widget' );
-}
-function ccfm_clear_cache_for_widgets_sidebar_admin_setup() {
-    // wp-admin/widgets.php
-    // We're saving/deleting a widget without js/ajax
-    if ( !empty( $_POST ) && ( isset($_POST['savewidget']) || isset($_POST['removewidget']) ) ) {
-        ccfm_clear_cache_for_me( 'widget' );
-    }
-}
-
-/**
- * Clear the cache when a theme customizations are saved (in Appearance->Customize)
- */
-function ccfm_clear_cache_for_customized_theme() {
-    ccfm_clear_cache_for_me( 'customize' );   
 }
 
 /**
