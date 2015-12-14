@@ -51,3 +51,10 @@ function ccfm_clear_cache_for_settings( $settings_errors ) {
 function ccfm_clear_cache_for_cf7() {
     ccfm_clear_cache_for_me( 'cf7' );
 }
+
+/**
+ * Clear cache when WooThemes options are updated.
+ */
+function ccfm_clear_cache_for_woo_options() {
+    ccfm_clear_cache_for_me( 'woo_options' );
+}

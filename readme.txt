@@ -1,10 +1,10 @@
 === Clear Cache for Me ===
 Contributors: webheadllc
 Donate link: http://webheadcoder.com/donate-clear-cache-for-me
-Tags: wpengine, widget, menu, cache, clear, purge, w3t, W3 Total Cache, WP Super Cache, WP Fastest Cache, refresh, update, empty, performance, optimization, contact form 7
+Tags: wpengine, widget, menu, cache, clear, purge, w3t, W3 Total Cache, WP Super Cache, WP Fastest Cache, refresh, update, empty, performance, optimization, contact form 7, woothemes
 Requires at least: 3.8
-Tested up to: 4.3
-Stable tag: 0.7.1
+Tested up to: 4.4
+Stable tag: 0.8
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -30,11 +30,16 @@ Clears all cache for following actions:
 * When Menus are saved
 * When Settings from a settings page is saved.
 * When a Contact Form 7 form is saved.
+* When WooThemes settings are saved.
 
 There is a convenient clear cache button on the dashboard for users with the right capability.  Admins (users with the 'manage_options' capability) can set which capability a user needs to view the button.  If you are using this button often, please consider submitting a request to have this plugin do your button-pushing for you.  This plugin is meant to work behind the scenes to make your life easier and less frustrating.
 
 
 == Changelog ==
+
+= 0.8 =
+Added clear cache for WooThemes options.  
+Fixed cache not clearing on some WP Super Cache installations.
 
 = 0.7.1 =
 Added clear cache for settings pages.  

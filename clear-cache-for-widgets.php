@@ -5,7 +5,7 @@ Plugin URI: http://mymonkeydo.com/caching-with-widgets
 Description: Purges all cache on WPEngine, W3 Total Cache, WP Super Cache, WP Fastest Cache when updating widgets, menus, settings.  Also adds a button with optional instructions to the dashboard to clear the cache.
 Author: Webhead LLC
 Author URI: http://webheadcoder.com 
-Version: 0.7.1
+Version: 0.8
 */
 
 
@@ -47,6 +47,9 @@ function ccfm_admin_init() {
         //detect ContactForm7 changes
         add_action( 'wpcf7_save_contact_form', 'ccfm_clear_cache_for_cf7' );
 
+        //detect WooThemes settings changes
+        add_action( 'update_option_woo_options', 'ccfm_clear_cache_for_woo_options' );
+
         do_action( 'ccfm_admin_init' );
     }
 }
@@ -77,7 +80,10 @@ function ccfm_clear_cache_for_me( $source ) {
     }
     // if WP Super Cache is being used, clear the cache
     else if ( function_exists( 'wp_cache_clean_cache' ) ) {
-        global $file_prefix;
+        global $file_prefix, $supercachedir;
+        if ( empty( $supercachedir ) && function_exists( 'get_supercache_dir' ) ) {
+            $supercachedir = get_supercache_dir();
+        }
         wp_cache_clean_cache( $file_prefix );
     }
     else if ( class_exists( 'WpeCommon' ) ) {
