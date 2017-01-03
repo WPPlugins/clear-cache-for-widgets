@@ -58,3 +58,10 @@ function ccfm_clear_cache_for_cf7() {
 function ccfm_clear_cache_for_woo_options() {
     ccfm_clear_cache_for_me( 'woo_options' );
 }
+
+/**
+ * Clear cache when NextGen Gallery galleries and albums are updated.
+ */
+function ccfm_clear_cache_for_ngg() {
+    ccfm_clear_cache_for_me( 'ngg' );
+}
