@@ -1,10 +1,10 @@
 === Clear Cache for Me ===
 Contributors: webheadllc
-Donate link: http://webheadcoder.com/donate-clear-cache-for-me
+Donate link: https://webheadcoder.com/donate-clear-cache-for-me
 Tags: wpengine, widget, menu, cache, clear, purge, w3t, W3 Total Cache, WP Super Cache, WP Fastest Cache, refresh, update, empty, performance, optimization, contact form 7, woothemes, ngg, gallery
 Requires at least: 3.8
-Tested up to: 4.7
-Stable tag: 0.9
+Tested up to: 4.7.1
+Stable tag: 0.91
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -37,6 +37,9 @@ There is a convenient clear cache button on the dashboard for users with the rig
 
 
 == Changelog ==
+
+= 0.91 =
+Minor fix checking if certain WPEngine functions exist.  Thanks to @tharmann!  
 
 = 0.9 =
 Added clear cache for NextGen Gallery saving, but not sure if all actions are accounted for.

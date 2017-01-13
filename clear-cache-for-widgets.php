@@ -1,11 +1,11 @@
 <?php 
 /*
 Plugin Name: Clear Cache For Me
-Plugin URI: http://mymonkeydo.com/caching-with-widgets
+Plugin URI: https://webheadcoder.com/clear-cache-for-me/
 Description: Purges all cache on WPEngine, W3 Total Cache, WP Super Cache, WP Fastest Cache when updating widgets, menus, settings.  Also adds a button with optional instructions to the dashboard to clear the cache.
 Author: Webhead LLC
-Author URI: http://webheadcoder.com 
-Version: 0.9
+Author URI: https://webheadcoder.com 
+Version: 0.91
 */
 
 
@@ -99,10 +99,10 @@ function ccfm_clear_cache_for_me( $source ) {
         if ( method_exists( 'WpeCommon', 'purge_memcached' ) ) {
             WpeCommon::purge_memcached();
         }
-        if ( method_exists( 'WpeCommon', 'purge_memcached' ) ) {  
+        if ( method_exists( 'WpeCommon', 'clear_maxcdn_cache' ) ) {  
             WpeCommon::clear_maxcdn_cache();
         }
-        if ( method_exists( 'WpeCommon', 'purge_memcached' ) ) {
+        if ( method_exists( 'WpeCommon', 'purge_varnish_cache' ) ) {
             WpeCommon::purge_varnish_cache();   
         }
     }
