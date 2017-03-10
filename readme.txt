@@ -3,8 +3,8 @@ Contributors: webheadllc
 Donate link: https://webheadcoder.com/donate-clear-cache-for-me
 Tags: wpengine, widget, menu, cache, clear, purge, w3t, W3 Total Cache, WP Super Cache, WP Fastest Cache, refresh, update, empty, performance, optimization, contact form 7, woothemes, ngg, gallery
 Requires at least: 3.8
-Tested up to: 4.7.1
-Stable tag: 0.91
+Tested up to: 4.7.3
+Stable tag: 0.92
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -35,8 +35,14 @@ Clears all cache for following actions:
 
 There is a convenient clear cache button on the dashboard for users with the right capability.  Admins (users with the 'manage_options' capability) can set which capability a user needs to view the button.  If you are using this button often, please consider submitting a request to have this plugin do your button-pushing for you.  This plugin is meant to work behind the scenes to make your life easier and less frustrating.
 
+== Screenshots ==
+
+1. The mythical button.  
 
 == Changelog ==
+
+= 0.92 =
+Fixed clearing cache on widgets when widgets are saved or reordered.  
 
 = 0.91 =
 Minor fix checking if certain WPEngine functions exist.  Thanks to @tharmann!  

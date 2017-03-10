@@ -5,7 +5,7 @@ Plugin URI: https://webheadcoder.com/clear-cache-for-me/
 Description: Purges all cache on WPEngine, W3 Total Cache, WP Super Cache, WP Fastest Cache when updating widgets, menus, settings.  Also adds a button with optional instructions to the dashboard to clear the cache.
 Author: Webhead LLC
 Author URI: https://webheadcoder.com 
-Version: 0.91
+Version: 0.92
 */
 
 

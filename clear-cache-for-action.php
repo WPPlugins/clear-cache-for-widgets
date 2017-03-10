@@ -8,13 +8,24 @@ function ccfm_clear_cache_for_menus() {
 }
 
 /**
- * Clear the caches for widgets.  Thanks to Ov3rfly
+ * Clear the caches for widgets.
+ */
+function ccfm_clear_cache_for_widgets( $not_used = null ) {
+    ccfm_clear_cache_for_me( 'widget' );
+    return $not_used;
+}
+
+/**
+ * Setup a filter to be called just before wp dies.
  */
 function ccfm_clear_cache_for_widgets_wp_ajax_action() {
-    // wp-admin/admin-ajax.php
     // 'widgets-order', 'save-widget'
-    ccfm_clear_cache_for_me( 'widget' );
+    add_filter( 'wp_die_ajax_handler', 'ccfm_clear_cache_for_widgets' );
 }
+
+/**
+ * Clear cache for widgets when saving without js/ajax.
+ */
 function ccfm_clear_cache_for_widgets_sidebar_admin_setup() {
     // wp-admin/widgets.php
     // We're saving/deleting a widget without js/ajax
