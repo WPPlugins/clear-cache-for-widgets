@@ -3,8 +3,8 @@ Contributors: webheadllc
 Donate link: https://webheadcoder.com/donate-clear-cache-for-me
 Tags: wpengine, widget, menu, cache, clear, purge, w3t, W3 Total Cache, WP Super Cache, WP Fastest Cache, refresh, update, empty, performance, optimization, contact form 7, woothemes, ngg, gallery
 Requires at least: 3.8
-Tested up to: 4.7.3
-Stable tag: 0.92
+Tested up to: 4.9.1
+Stable tag: 0.93
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -40,6 +40,9 @@ There is a convenient clear cache button on the dashboard for users with the rig
 1. The mythical button.  
 
 == Changelog ==
+
+= 0.93 =
+Fixed button not showing up when admin doesn't have permissions.  Button will now always show for the admin user with manage_options capability.  
 
 = 0.92 =
 Fixed clearing cache on widgets when widgets are saved or reordered.  

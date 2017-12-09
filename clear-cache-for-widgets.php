@@ -5,7 +5,7 @@ Plugin URI: https://webheadcoder.com/clear-cache-for-me/
 Description: Purges all cache on WPEngine, W3 Total Cache, WP Super Cache, WP Fastest Cache when updating widgets, menus, settings.  Also adds a button with optional instructions to the dashboard to clear the cache.
 Author: Webhead LLC
 Author URI: https://webheadcoder.com 
-Version: 0.92
+Version: 0.93
 */
 
 
@@ -117,15 +117,14 @@ function ccfm_clear_cache_for_me( $source ) {
  */
 function ccfm_dashboard_widget() {
     $needed_cap = get_option( 'ccfm_permission', 'manage_options' );
-    if ( current_user_can( $needed_cap ) ) {
+    if ( current_user_can( $needed_cap ) || current_user_can( 'manage_options' ) ) {
         wp_add_dashboard_widget('dashboard_ccfm_widget', 'Clear Cache for Me', 'ccfm_dashboard_widget_output');       
     }
 }
 
 function ccfm_dashboard_widget_output() {
     $needed_cap = get_option( 'ccfm_permission', 'manage_options' );
-    if ( current_user_can( $needed_cap ) ) {
-        $infotext = get_option( 'ccfm_infotext', '' );
+    $infotext = get_option( 'ccfm_infotext', '' );
     ?>
 <div class="ccfm_widget">
     <form method="post">
@@ -173,7 +172,6 @@ function ccfm_dashboard_widget_output() {
     </form>
 </div>
     <?php
-        }
     }
 }
 
