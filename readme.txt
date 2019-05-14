@@ -1,20 +1,22 @@
 === Clear Cache for Me ===
 Contributors: webheadllc
 Donate link: https://webheadcoder.com/donate-clear-cache-for-me
-Tags: wpengine, widget, menu, cache, clear, purge, w3t, W3 Total Cache, WP Super Cache, WP Fastest Cache, refresh, update, empty, performance, optimization, contact form 7, woothemes, ngg, gallery
+Tags: wpengine, widget, menu, cache, clear, purge, w3t, W3 Total Cache, WP Super Cache, WP Fastest Cache, refresh, update, empty, performance, optimization, contact form 7, woothemes, ngg, gallery, Qode, theme, cache buster
 Requires at least: 3.8
-Tested up to: 4.9.1
-Stable tag: 0.93
+Tested up to: 5.2
+Stable tag: 1.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-Purges all cache on WPEngine, W3 Total Cache, WP Super Cache, WP Fastest Cache when updating widgets, menus, settings.
+Purges all cache on WPEngine, W3 Total Cache, WP Super Cache, WP Fastest Cache when updating widgets, menus, settings.  Forces a browser to reload a theme's CSS and JS files.
 
 == Description ==
 
-**NOTE:  If you do not use the W3 Total Cache or WP Super Cache plugins, WP Fastest Cache, or do not host your website on WPEngine, this plugin will do nothing for you.**
-
 W3 Total Cache and WP Super Cache are great caching plugins, but they do not know when a widget is updated.  WPEngine is the best place to host your WordPress installation, but their caching system is no smarter when it comes to updating widgets and menus.  I created this plugin because my website did not see any changes when saving widgets or menus using these caching systems.  Clear Cache For Me will purge ALL your cache each time you do a save without having to press an additional button.  It may be overkill, which may be why it's not built in, but some people need simplicity.
+
+In addition to clearing those pesky caching engines, Clear Cache for Me can force your browser to reload your current theme's CSS and JS files.  I modify my theme's CSS and JS files every so often and always have trouble with the browser not getting the latest version.  So now after clicking on the "Clear Cache Now!" button on the dashboard the browser will be forced to reload the current theme's CSS and JS files.  If you do not click the "Clear Cache Now!" button, the browser will cache the CSS and JS files like it normally does.
+
+The popular Qode themes has a options to set your own custom CSS and JS.  Sometimes you may not see your changes for a long while because your browser is trying to get the cached file.  Whenever you save your Qode's options, the CSS and JS files will be forced to reload in the browser on the public side.
 
 Works with the following caching systems:
 
@@ -32,6 +34,7 @@ Clears all cache for following actions:
 * When a Contact Form 7 form is saved.
 * When WooThemes settings are saved.
 * When NextGen Gallery albums and galleries are updated (beta - may not clear cache on all actions).
+* When Qode options are saved this plugin forces browsers to reload the custom css and custom js.
 
 There is a convenient clear cache button on the dashboard for users with the right capability.  Admins (users with the 'manage_options' capability) can set which capability a user needs to view the button.  If you are using this button often, please consider submitting a request to have this plugin do your button-pushing for you.  This plugin is meant to work behind the scenes to make your life easier and less frustrating.
 
@@ -40,6 +43,10 @@ There is a convenient clear cache button on the dashboard for users with the rig
 1. The mythical button.  
 
 == Changelog ==
+
+= 1.0 =
+Added clearing cache for all JS and CSS theme files.  
+Added clearing cache when Qode theme options are saved.  
 
 = 0.93 =
 Fixed button not showing up when admin doesn't have permissions.  Button will now always show for the admin user with manage_options capability.  

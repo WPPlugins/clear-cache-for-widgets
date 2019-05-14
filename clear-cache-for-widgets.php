@@ -2,10 +2,10 @@
 /*
 Plugin Name: Clear Cache For Me
 Plugin URI: https://webheadcoder.com/clear-cache-for-me/
-Description: Purges all cache on WPEngine, W3 Total Cache, WP Super Cache, WP Fastest Cache when updating widgets, menus, settings.  Also adds a button with optional instructions to the dashboard to clear the cache.
+Description: Purges all cache on WPEngine, W3 Total Cache, WP Super Cache, WP Fastest Cache when updating widgets, menus, settings.  Forces a browser to reload a theme's CSS and JS files.
 Author: Webhead LLC
 Author URI: https://webheadcoder.com 
-Version: 0.93
+Version: 1.0
 */
 
 
@@ -22,14 +22,24 @@ add_action( 'plugins_loaded', 'ccfm_plugins_loaded' );
  * Add widget save, reorder and delete detection.  Thanks to Ov3rfly.
  */
 function ccfm_admin_init() {
-    if ( ccfm_supported_caching_exists() ) {
-        ccfm_handle_requests();
-        ccfm_set_capability();
+    global $pagenow;
 
-        add_action( 'wp_dashboard_setup', 'ccfm_dashboard_widget' );
-        
-        //add styles for dashboard
-        add_action( 'admin_head', 'ccfm_admin_head' );
+    ccfm_handle_requests();
+    ccfm_set_capability();
+
+    add_action( 'wp_dashboard_setup', 'ccfm_dashboard_widget' );
+    
+    //add styles for dashboard
+    add_action( 'admin_head', 'ccfm_admin_head' );
+
+    if ( defined( 'QODE_ROOT' ) ) {
+        if ( 'options.php' == $pagenow ) {
+            //detect when qode options saved.
+            add_action( 'updated_option', 'ccfm_save_clear_cache_for_qode', 10, 3 );   
+        }
+    }
+
+    if ( ccfm_supported_caching_exists() ) {
 
         //detect widget save, reorder and delete detection.  Thanks to Ov3rfly.
         add_action( 'wp_ajax_save-widget', 'ccfm_clear_cache_for_widgets_wp_ajax_action', 1 );
@@ -56,7 +66,6 @@ function ccfm_admin_init() {
         add_action( 'ngg_update_album', 'ccfm_clear_cache_for_ngg' );
         add_action( 'ngg_update_album_sortorder', 'ccfm_clear_cache_for_ngg' );
         add_action( 'ngg_delete_album', 'ccfm_clear_cache_for_ngg' );
-
 
         do_action( 'ccfm_admin_init' );
     }
@@ -110,6 +119,11 @@ function ccfm_clear_cache_for_me( $source ) {
         $wp_fastest_cache->deleteCache();
     }
     do_action( 'ccfm_clear_cache_for_me', $source );
+
+    $time = time();
+    update_option( '_ccfm_style_timestamp_theme', $time );
+
+    do_action( 'ccfm_clear_cache_for_css_js', $time );
 }
 
 /**
@@ -295,4 +309,55 @@ function ccfm_error() { ?>
         <p><?php _e( 'You do not have permission to do that.', 'ccfm' ); ?></p>
     </div>
 <?php
+}
+
+
+
+/**
+ * If we have urls to uncache, setup filters.
+ * - must be at wp_head priority 1 for style_loader_src to work.
+ */
+function ccfm_clear_cache_for_custom_styles() {
+    add_filter( 'style_loader_src', 'ccfm_show_src_version', 10, 2 );
+    add_filter( 'script_loader_src', 'ccfm_show_src_version', 10, 2 );
+}
+add_action( 'wp_head', 'ccfm_clear_cache_for_custom_styles', 1 );
+
+/**
+ * Change a src to a key.
+ */
+function ccfm_custom_src_key( $src ) {
+    $urls = apply_filters( 'ccfm_custom_src_urls', array() );
+    $src_parts = explode( '?', $src );
+    foreach( $urls as $url => $key ) {
+        if ( $src_parts[0] === $url ) {
+            return $key;
+        }   
+    }
+    $template = get_template_directory_uri();
+    $child = get_stylesheet_directory_uri();
+    if ( stripos( $src, $template ) === 0 || stripos( $src, $child ) === 0 ) {
+        return 'theme';
+    }
+
+    return '';
+}
+
+/**
+ * Filter the version to make sure it's the latest.
+ */    
+function ccfm_show_src_version ( $src, $handle ) {
+    $key = ccfm_custom_src_key( $src );
+    $timestamp = get_option( '_ccfm_style_timestamp_' . $key, '' );
+    if ( empty( $timestamp ) ) {
+        return $src;
+    }
+    $src_parts = explode( '?', $src );
+    if ( count( $src_parts ) > 1 ) {
+        $query_string = $src_parts[1];
+        parse_str( $query_string, $query );
+        $query['ver'] = $timestamp;
+        return add_query_arg( $query, $src_parts[0] );
+    }
+    return add_query_arg( 'ver', $timestamp, $src );
 }

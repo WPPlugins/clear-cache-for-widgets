@@ -76,3 +76,38 @@ function ccfm_clear_cache_for_woo_options() {
 function ccfm_clear_cache_for_ngg() {
     ccfm_clear_cache_for_me( 'ngg' );
 }
+
+/*** code for if qode was outside of theme and not saved by saving options. ***/
+/**
+ * "clear cache" for custom qode js and css files.
+ */
+/*
+function ccfm_clear_cache_for_css_js_qode( $time ) {
+    update_option( '_ccfm_style_timestamp_theme_qode', $time );
+}
+add_action( 'ccfm_clear_cache_for_css_js', 'ccfm_clear_cache_for_css_js_qode' );
+*/
+/**
+ * Save a timestamp whenever the qode options are saved.
+ */
+/*
+function ccfm_save_clear_cache_for_qode( $option_name, $old_value, $value ) {
+    if ( stripos( $option_name, 'qode_options_' ) === 0 ) {
+        ccfm_clear_cache_for_css_js_qode();
+    }
+}
+*/
+/**
+ * Return all urls belonging to qode.
+ */
+/*
+function ccfm_custom_src_urls_qode( $arr ) {
+    if ( defined( 'QODE_ROOT' ) ) {
+        $arr[QODE_ROOT."/css/custom_css.php"] = 'theme_qode';
+        $arr[QODE_ROOT."/js/custom_js.php"] = 'theme_qode';
+    }
+    return $arr;
+}
+add_filter( 'ccfm_custom_src_urls', 'ccfm_custom_src_urls_qode' );
+*/
+
