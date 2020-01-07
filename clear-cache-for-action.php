@@ -77,6 +77,71 @@ function ccfm_clear_cache_for_ngg() {
     ccfm_clear_cache_for_me( 'ngg' );
 }
 
+/**
+ * Clear cache when Formdiable forms and settings are updated.
+ */
+function ccfm_clear_cache_for_formidable() {
+    ccfm_clear_cache_for_me( 'formidable' );
+}
+
+/**
+ * Add all urls to be purged and purge it in GoDaddy Cache.
+ */
+function ccfm_godaddy_purge() {
+    if ( ! class_exists( '\WPaaS\Cache' ) ) {
+        return;
+    }
+
+    /**
+     * Purge all URLs where a post might appear
+     */
+    \WPaaS\Cache::$purge_urls[] = untrailingslashit( home_url() );
+    \WPaaS\Cache::$purge_urls[] = trailingslashit( home_url() );
+    \WPaaS\Cache::$purge_urls[] = get_permalink( $post->ID );
+    \WPaaS\Cache::$purge_urls[] = get_post_type_archive_link( $post->post_type );
+    \WPaaS\Cache::$purge_urls[] = get_post_type_archive_feed_link( $post->post_type );
+    \WPaaS\Cache::$purge_urls[] = get_author_posts_url( (int) $post->post_author );
+
+    // Taxonomy-related URLs
+    foreach ( get_post_taxonomies( $post ) as $tax ) {
+
+        $post_terms = wp_get_post_terms( $post->ID, $tax );
+
+        if ( is_wp_error( $post_terms ) ) {
+
+            continue;
+
+        }
+
+        foreach ( $post_terms as $term ) {
+
+            \WPaaS\Cache::$purge_urls[] = get_term_link( $term );
+            \WPaaS\Cache::$purge_urls[] = get_term_feed_link( $term->term_id, $term->taxonomy );
+
+        }
+
+    }
+
+    foreach ( \WPaaS\Cache::$purge_urls as $key => $url ) {
+
+        // Archive page might return false
+        if ( ! $url || is_wp_error( $url ) ) {
+
+            unset( \WPaaS\Cache::$purge_urls[ $key ] );
+
+        }
+
+    }
+
+    \WPaaS\Cache::$purge_urls = array_values( array_unique( \WPaaS\Cache::$purge_urls ) );
+
+    if ( ! \WPaaS\Cache::has_purge() ) {
+
+        add_action( 'shutdown', [ '\WPaaS\Cache', 'purge' ], PHP_INT_MAX );
+
+    }
+}
+
 /*** code for if qode was outside of theme and not saved by saving options. ***/
 /**
  * "clear cache" for custom qode js and css files.

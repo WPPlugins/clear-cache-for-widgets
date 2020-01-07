@@ -1,10 +1,10 @@
 === Clear Cache for Me ===
 Contributors: webheadllc
 Donate link: https://webheadcoder.com/donate-clear-cache-for-me
-Tags: wpengine, widget, menu, cache, clear, purge, w3t, W3 Total Cache, WP Super Cache, WP Fastest Cache, refresh, update, empty, performance, optimization, contact form 7, woothemes, ngg, gallery, Qode, theme, cache buster
+Tags: wpengine, cache, clear, purge, js, css, widget
 Requires at least: 3.8
-Tested up to: 5.2
-Stable tag: 1.0
+Tested up to: 5.3.2
+Stable tag: 1.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -23,7 +23,9 @@ Works with the following caching systems:
 * W3 Total Cache
 * WP Super Cache
 * WP Fastest Cache
-* WPEngine hosting
+* WPEngine Cache
+* Kinsta Cache
+* GoDaddy Cache
 
 Clears all cache for following actions:
 
@@ -32,6 +34,7 @@ Clears all cache for following actions:
 * When Menus are saved
 * When Settings from a settings page is saved.
 * When a Contact Form 7 form is saved.
+* When a Formidable Form form is saved.
 * When WooThemes settings are saved.
 * When NextGen Gallery albums and galleries are updated (beta - may not clear cache on all actions).
 * When Qode options are saved this plugin forces browsers to reload the custom css and custom js.
@@ -43,6 +46,11 @@ There is a convenient clear cache button on the dashboard for users with the rig
 1. The mythical button.  
 
 == Changelog ==
+
+= 1.1 =
+Added cache clearing for Kinsta hosting.  
+Added cache clearing for GoDaddy manged hosting.  
+Added cache clearing for Formidable Forms.  
 
 = 1.0 =
 Added clearing cache for all JS and CSS theme files.  
@@ -138,6 +146,24 @@ function yt_cache_clear() {
         autoptimizeCache::clearall();
 }
 add_action('ccfm_clear_cache_for_me', 'yt_cache_clear');`
+
+
+Similarly, if you are using the LiteSpeed Cache plugin, you can add the following (untested) code.  I don't have a LiteSpeed server so I'm unable to verify this actually works.
+
+`<?php
+function my_lt_cache_enable( $return = false ) {
+    if ( class_exists( 'LiteSpeed_Cache_Purge' ) )
+        return true;
+    
+    return $return;
+}
+add_filter('ccfm_supported_caching_exists', 'my_lt_cache_enable');
+
+function my_lt_cache_clear() {
+    if ( my_lt_cache_enable() )
+        LiteSpeed_Cache_Purge::purge_all( 'Clear Cache For Me' );
+}
+add_action('ccfm_clear_cache_for_me', 'my_lt_cache_clear');`
 
 
 = Example 2 =

@@ -5,9 +5,11 @@ Plugin URI: https://webheadcoder.com/clear-cache-for-me/
 Description: Purges all cache on WPEngine, W3 Total Cache, WP Super Cache, WP Fastest Cache when updating widgets, menus, settings.  Forces a browser to reload a theme's CSS and JS files.
 Author: Webhead LLC
 Author URI: https://webheadcoder.com 
-Version: 1.0
+Version: 1.1
 */
 
+
+define( 'CCFM_VERSION', '1.1' );
 
 require_once( 'clear-cache-for-action.php' );
 
@@ -67,6 +69,9 @@ function ccfm_admin_init() {
         add_action( 'ngg_update_album_sortorder', 'ccfm_clear_cache_for_ngg' );
         add_action( 'ngg_delete_album', 'ccfm_clear_cache_for_ngg' );
 
+        //detect Formidable changes
+        add_action( 'frm_update_form', 'ccfm_clear_cache_for_formidable' );
+
         do_action( 'ccfm_admin_init' );
     }
 }
@@ -80,6 +85,12 @@ function ccfm_supported_caching_exists() {
                || function_exists( 'wp_cache_clean_cache' )
                || class_exists( 'WpeCommon' )
                || method_exists( 'WpFastestCache', 'deleteCache' );
+    if ( !$supported ) {
+        $supported = class_exists( '\Kinsta\Cache' );
+    }
+    if ( !$supported ) {
+        $supported = class_exists( '\WPaaS\Cache' );
+    }
     return apply_filters( 'ccfm_supported_caching_exists', $supported );
 }
 
@@ -87,7 +98,7 @@ function ccfm_supported_caching_exists() {
  * Clear the caches!
  */
 function ccfm_clear_cache_for_me( $source ) {
-    global $wp_fastest_cache;
+    global $wp_fastest_cache, $kinsta_cache;
 
     do_action( 'ccfm_clear_cache_for_me_before', $source );
 
@@ -118,12 +129,35 @@ function ccfm_clear_cache_for_me( $source ) {
     else if ( method_exists( 'WpFastestCache', 'deleteCache' ) && !empty( $wp_fastest_cache ) ) {
         $wp_fastest_cache->deleteCache();
     }
+    else if ( class_exists( '\Kinsta\Cache' ) && !empty( $kinsta_cache ) ) {
+        $kinsta_cache->kinsta_cache_purge->purge_complete_caches();
+    }
+    else if ( class_exists( '\WPaaS\Cache' ) ) {
+        ccfm_godaddy_purge();
+    }
     do_action( 'ccfm_clear_cache_for_me', $source );
 
     $time = time();
     update_option( '_ccfm_style_timestamp_theme', $time );
 
     do_action( 'ccfm_clear_cache_for_css_js', $time );
+}
+
+/**
+ * Return true if hosting notice should show.
+ */
+function ccfm_show_hosting_notice() {
+    global $kinsta_cache;
+    $stats = get_option( '_ccfm_stats', 0 );
+
+    if ( !empty( $stats['hosting_notice'] ) ) {
+        return false;
+    }
+    if ( class_exists( '\Kinsta\Cache' ) && !empty( $kinsta_cache ) ) {
+        return false;
+    }
+
+    return true;
 }
 
 /**
@@ -139,7 +173,50 @@ function ccfm_dashboard_widget() {
 function ccfm_dashboard_widget_output() {
     $needed_cap = get_option( 'ccfm_permission', 'manage_options' );
     $infotext = get_option( 'ccfm_infotext', '' );
+    $show_hosting_notice_class = ccfm_show_hosting_notice() ? '' : 'hide';
     ?>
+    <style>
+    .hosting-notice {
+        position:relative; 
+        padding: 12px 14px; 
+        background: #da9d0f; 
+        color: #fff;
+        margin: 12px 0 16px;
+        border-left: 4px solid #a97909;
+    }
+
+    .hosting-notice a {
+        color: #fff;
+        font-weight: bold;
+    }
+
+    .hosting-notice.hide {
+        display: none;
+    }
+
+    .hosting-notice .close-link {
+        position: absolute; 
+        display:block;
+        right: 0;
+        top: 0; 
+        line-height: 12px; 
+        margin-top: -7px; 
+        margin-right: -7px; 
+        border-radius:50%; 
+        border: 1px solid gray; 
+        width: 14px; 
+        height: 14px; 
+        background: gray; 
+        color: #fff; 
+        text-align:center;
+        font-size: 11px;
+        font-family: Arial;
+        text-decoration: none;
+    }
+    #dashboard-widgets .ccfm_widget h4 {
+        font-weight: bold;
+    }
+    </style>
 <div class="ccfm_widget">
     <form method="post">
     <?php echo ( $infotext ) ? '<p>' . $infotext . '</p>' : ''; ?>
@@ -164,6 +241,10 @@ function ccfm_dashboard_widget_output() {
             asort( $caps );
     ?>
 <div class="ccfm_widget">
+    <div class="hosting-notice <?php echo $show_hosting_notice_class; ?>">
+        <a href="#" class="close-link">x</a>
+        Hosting providers are now faster with cloud services.  <a href="https://webheadcoder.com/cloud-web-hosts/" target="_blank">Check them out here</a>.
+    </div>
     <h4><?php _e( 'Settings', 'ccfm' ); ?></h4>
     <form method="post">
     <label for="ccfm_permission"><?php _e( 'Show button for users with capability:', 'ccfm' ); ?></label>
@@ -361,3 +442,37 @@ function ccfm_show_src_version ( $src, $handle ) {
     }
     return add_query_arg( 'ver', $timestamp, $src );
 }
+
+
+/**
+ * Tag generator helper scripts
+ */
+function ccfm_admin_enqueue_scripts( $hook_suffix ) {
+    if ( $hook_suffix == 'index.php' && ccfm_show_hosting_notice() ) {
+        wp_enqueue_script( 'ccfm-admin',
+            plugins_url( 'js/admin.js', __FILE__ ),
+            array( 'jquery' ),
+            CCFM_VERSION, true );
+
+        wp_localize_script( 'ccfm-admin', 'ccfm_admin', array(
+            'nonce'         => wp_create_nonce( 'ccfm-admin-nonce' )
+        ));
+    }
+}
+add_action( 'admin_enqueue_scripts', 'ccfm_admin_enqueue_scripts' );
+
+
+/**
+ * Remember user closed the hosting notice 
+ */
+function ccfm_hosting_notice_response() {
+    if ( !check_ajax_referer( 'ccfm-admin-nonce', 'nonce', false ) ){
+        wp_send_json( 0 );
+    }
+    $stats = get_option( '_ccfm_stats', array() );
+    $stats['hosting_notice'] = 1;
+
+    update_option( '_ccfm_stats', $stats );
+    wp_send_json( 1 );
+}
+add_action('wp_ajax_ccfm-notice-response', 'ccfm_hosting_notice_response');
