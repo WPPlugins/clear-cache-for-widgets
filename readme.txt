@@ -4,7 +4,7 @@ Donate link: https://webheadcoder.com/donate-clear-cache-for-me
 Tags: wpengine, cache, clear, purge, js, css, widget
 Requires at least: 3.8
 Tested up to: 5.3.2
-Stable tag: 1.1.1
+Stable tag: 1.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -26,6 +26,7 @@ Works with the following caching systems:
 * WPEngine Cache
 * Kinsta Cache
 * GoDaddy Cache
+* WP Optimize Cache
 
 Clears all cache for following actions:
 
@@ -47,7 +48,10 @@ There is a convenient clear cache button on the dashboard for users with the rig
 
 == Changelog ==
 
-= 1.1 =
+= 1.2 =
+Added cache clearing for WP Optimize cache.
+
+= 1.1.1 =
 removed hosting notice, fixed js error.  
 
 = 1.1 =

@@ -5,11 +5,11 @@ Plugin URI: https://webheadcoder.com/clear-cache-for-me/
 Description: Purges all cache on WPEngine, W3 Total Cache, WP Super Cache, WP Fastest Cache when updating widgets, menus, settings.  Forces a browser to reload a theme's CSS and JS files.
 Author: Webhead LLC
 Author URI: https://webheadcoder.com 
-Version: 1.1.1
+Version: 1.2
 */
 
 
-define( 'CCFM_VERSION', '1.1.1' );
+define( 'CCFM_VERSION', '1.2' );
 
 require_once( 'clear-cache-for-action.php' );
 
@@ -91,6 +91,9 @@ function ccfm_supported_caching_exists() {
     if ( !$supported ) {
         $supported = class_exists( '\WPaaS\Cache' );
     }
+    if ( !$supported ) {
+        $supported = class_exists( 'WP_Optimize' ) && defined( 'WPO_PLUGIN_MAIN_PATH' );
+    }
     return apply_filters( 'ccfm_supported_caching_exists', $supported );
 }
 
@@ -135,12 +138,37 @@ function ccfm_clear_cache_for_me( $source ) {
     else if ( class_exists( '\WPaaS\Cache' ) ) {
         ccfm_godaddy_purge();
     }
+    else if ( class_exists( 'WP_Optimize' ) && defined( 'WPO_PLUGIN_MAIN_PATH' ) ) {
+        if (!class_exists('WP_Optimize_Cache_Commands')) include_once(WPO_PLUGIN_MAIN_PATH . 'cache/class-cache-commands.php');
+
+        if ( class_exists( 'WP_Optimize_Cache_Commands' ) ) {
+            $wpoptimize_cache_commands = new WP_Optimize_Cache_Commands();
+            $wpoptimize_cache_commands->purge_page_cache();
+        }
+    }
     do_action( 'ccfm_clear_cache_for_me', $source );
 
     $time = time();
     update_option( '_ccfm_style_timestamp_theme', $time );
 
     do_action( 'ccfm_clear_cache_for_css_js', $time );
+}
+
+/**
+ * Return true if hosting notice should show.
+ */
+function ccfm_show_hosting_notice() {
+    global $kinsta_cache;
+    $stats = get_option( '_ccfm_stats', 0 );
+
+    if ( !empty( $stats['hosting_notice'] ) ) {
+        return false;
+    }
+    if ( class_exists( '\Kinsta\Cache' ) && !empty( $kinsta_cache ) ) {
+        return false;
+    }
+
+    return true;
 }
 
 /**
@@ -156,6 +184,7 @@ function ccfm_dashboard_widget() {
 function ccfm_dashboard_widget_output() {
     $needed_cap = get_option( 'ccfm_permission', 'manage_options' );
     $infotext = get_option( 'ccfm_infotext', '' );
+    $show_hosting_notice_class = false && ccfm_show_hosting_notice() ? '' : 'hide';
     ?>
     <style>
     .hosting-notice {
@@ -223,6 +252,10 @@ function ccfm_dashboard_widget_output() {
             asort( $caps );
     ?>
 <div class="ccfm_widget">
+    <div class="hosting-notice <?php echo $show_hosting_notice_class; ?>">
+        <a href="#" class="close-link">x</a>
+        Hosting providers are now faster with cloud services.  <a href="https://webheadcoder.com/cloud-web-hosts/" target="_blank">Check them out here</a>.
+    </div>
     <h4><?php _e( 'Settings', 'ccfm' ); ?></h4>
     <form method="post">
     <label for="ccfm_permission"><?php _e( 'Show button for users with capability:', 'ccfm' ); ?></label>
@@ -421,6 +454,23 @@ function ccfm_show_src_version ( $src, $handle ) {
     return add_query_arg( 'ver', $timestamp, $src );
 }
 
+
+/**
+ * Tag generator helper scripts
+ */
+function ccfm_admin_enqueue_scripts( $hook_suffix ) {
+    if ( $hook_suffix == 'index.php' && ccfm_show_hosting_notice() ) {
+        wp_enqueue_script( 'ccfm-admin',
+            plugins_url( 'js/admin.js', __FILE__ ),
+            array( 'jquery' ),
+            CCFM_VERSION, true );
+
+        wp_localize_script( 'ccfm-admin', 'ccfm_admin', array(
+            'nonce'         => wp_create_nonce( 'ccfm-admin-nonce' )
+        ));
+    }
+}
+// add_action( 'admin_enqueue_scripts', 'ccfm_admin_enqueue_scripts' );
 
 
 /**
