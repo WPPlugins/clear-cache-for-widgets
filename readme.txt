@@ -4,11 +4,11 @@ Donate link: https://webheadcoder.com/donate-clear-cache-for-me
 Tags: wpengine, cache, clear, purge, js, css, widget
 Requires at least: 3.8
 Tested up to: 5.3.2
-Stable tag: 1.2
+Stable tag: 1.3
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-Purges all cache on WPEngine, W3 Total Cache, WP Super Cache, WP Fastest Cache when updating widgets, menus, settings.  Forces a browser to reload a theme's CSS and JS files.
+Purges all cache on WPEngine, W3 Total Cache, WP Super Cache, WP Fastest Cache when updating widgets, menus, settings.  Forces a browser to reload CSS and JS files.
 
 == Description ==
 
@@ -27,26 +27,36 @@ Works with the following caching systems:
 * Kinsta Cache
 * GoDaddy Cache
 * WP Optimize Cache
+* Breeze Cache
 
 Clears all cache for following actions:
 
 * When Widgets are saved
 * When Customizer is saved
 * When Menus are saved
-* When Settings from a settings page is saved.
 * When a Contact Form 7 form is saved.
 * When a Formidable Form form is saved.
 * When WooThemes settings are saved.
 * When NextGen Gallery albums and galleries are updated (beta - may not clear cache on all actions).
 * When Qode options are saved this plugin forces browsers to reload the custom css and custom js.
+* When a WP Forms forms or settings are saved.
+* When WooCommerce settings are saved. (Cache should already be clearing when products are saved.)
+* When Settings from a settings page is saved.  This includes settings from WordPress core, Yoast SEO, and most other plugins using the Settings API.
 
-There is a convenient clear cache button on the dashboard for users with the right capability.  Admins (users with the 'manage_options' capability) can set which capability a user needs to view the button.  If you are using this button often, please consider submitting a request to have this plugin do your button-pushing for you.  This plugin is meant to work behind the scenes to make your life easier and less frustrating.
+[See the plugin's homepage for more details](https://webheadcoder.com/clear-cache-for-me/).
 
 == Screenshots ==
 
-1. The mythical button.  
+1. The button on the dashboard.  
 
 == Changelog ==
+
+= 1.3 =
+Added cache clearing for Breeze cache.
+Added cache clearing when WP Forms is saved
+Added cache clearing when WooCommerce settings are saved.
+Moved the settings to its own page under Settings.  
+Fixed cache clearing for GoDaddy so all pages are cleared.
 
 = 1.2 =
 Added cache clearing for WP Optimize cache.
@@ -125,7 +135,7 @@ Use this filter to determine if this plugin should do anything including showing
 Default: True if any of the supported caching systems is active.  
 See Example 1 below.
 
-= ccfm_admin_init =  
+= ccfm_admin_init or ccfm_init_actions =  
 Use this action to add hooks when cache is to be cleared.  Or do any other setup activity.  
 
 = ccfm_clear_cache_for_me_before = 
@@ -139,11 +149,11 @@ Use this action to clear cache from an unsupported caching system after the defa
 Thanks to Benjamin Pick - If you are using Autoptimize and need to clear the CSS or JS files automatically, you can add the code below to your theme's functions.php file.  This code also demonstrates how you can add an unsupported caching system and have its cache cleared for you.  
 https://gist.github.com/benjaminpick/94b487ce995454797143  
 also pasted below:  
+
 `<?php
 function yt_cache_enable($return) {
     if (class_exists('autoptimizeCache'))
         return true;
-    
     return $return;
 }
 add_filter('ccfm_supported_caching_exists', 'yt_cache_enable');
@@ -161,7 +171,6 @@ Similarly, if you are using the LiteSpeed Cache plugin, you can add the followin
 function my_lt_cache_enable( $return = false ) {
     if ( class_exists( 'LiteSpeed_Cache_Purge' ) )
         return true;
-    
     return $return;
 }
 add_filter('ccfm_supported_caching_exists', 'my_lt_cache_enable');
@@ -177,10 +186,11 @@ add_action('ccfm_clear_cache_for_me', 'my_lt_cache_clear');`
 Thanks to Benjamin Pick - If you have an automatic deployment setup and need a webhook to clear the caches, you can add this code to your theme's functions.php file.  
 https://gist.github.com/benjaminpick/67b6b9a49ef7991172f9  
 also pasted below:  
-`<?php
-if (!defined('CLEAR_CACHE_HOOK_KEY'))
-    define('CLEAR_CACHE_HOOK_KEY', 'some_secret_key_please');
 
+`<?php
+if (!defined('CLEAR_CACHE_HOOK_KEY')) {
+    define('CLEAR_CACHE_HOOK_KEY', 'some_secret_key_please');
+}
 function yt_cache_clear_web_hook() {
     if (isset($_GET['key']) && $_GET['key'] == CLEAR_CACHE_HOOK_KEY) {
         if (function_exists('ccfm_clear_cache_for_me')) {
