@@ -92,6 +92,10 @@ function ccfm_options_do_page() {
             margin-bottom: 0;
         }
 
+        .ccfm-settings a .dashicons {
+            text-decoration: none;
+        }
+
 
     </style>
     <div class="ccfm-settings wrap">
@@ -130,7 +134,7 @@ function ccfm_options_do_page() {
             <br>
             <h3>Button Settings</h3>
             <table class="form-table">
-                <tr valign="top"><th scope="row"><?php _e( 'Required capability to see the button on dashboard.', 'ccfm' ); ?></th>
+                <tr valign="top"><th scope="row"><?php _e( 'Required capability to see the button (on dashboard and top admin bar).', 'ccfm' ); ?></th>
                     <td>
                         <select name="ccfm_options[btn_cap]" id="btn_cap">
                             <?php foreach ( $caps as $cap ) : ?>
@@ -146,10 +150,30 @@ function ccfm_options_do_page() {
                         <br><i><?php _e( 'These instructions will appear on the dashboard above the Clear Cache button.', 'ccfm' ); ?></i>
                     </td>
                 </tr>
+                <tr valign="top"><th scope="row"><?php _e( 'Show \'Clear Cache For Me\' button in admin bar.', 'ccfm' ); ?></th>
+                    <td>
+                        <input type="checkbox" name="ccfm_options[btn_admin_bar]" value="1" <?php checked( 1, isset( $options['btn_admin_bar'] ) ? $options['btn_admin_bar'] : 1 ); ?>> Yes
+                        <?php if ( empty( $cache_name ) ) : ?>
+                        <br><i style="color: #dc3232;"><?php _e( 'The button will not show due to the status shown above.', 'ccfm' ); ?></i>
+                        <?php endif; ?>
+                    </td>
+                </tr>
 
 
             </table>
 
+            <br>
+            <h3>Development Mode</h3>
+
+            <table class="form-table">
+                <tr valign="top"><th scope="row"><?php _e( 'Load CSS and JS files on each page load.', 'ccfm' ); ?> <?php echo sprintf( __( '<a href="%s" target="_blank"><span class="dashicons dashicons-editor-help"></span></a>', 'ccfm' ), 'https://webheadcoder.com/clear-cache-for-me/#dev-mode' ); ?></th>
+                    <td>
+                        <input type="checkbox" name="ccfm_options[dev_mode_assets]" value="1" <?php checked( 1, isset( $options['dev_mode_assets'] ) ? $options['dev_mode_assets'] : 0 ); ?>> Yes
+                    </td>
+                </tr>
+
+
+            </table>
             <br>
             <p class="submit">
             <input type="submit" class="button-primary" value="<?php _e( 'Save Changes' ) ?>" />
@@ -164,6 +188,18 @@ function ccfm_options_do_page() {
  */
 function ccfm_options_validate( $input ) {
     global $wp_settings_errors;
+
+    // all checkboxes
+    $setting_names = array( 
+        'btn_admin_bar',
+        'dev_mode_assets'
+    );
+    foreach( $setting_names as $name ) {
+        if ( !isset( $input[$name] ) ) {
+            $input[$name] = 0;
+        }  
+    }
+      
     return $input;
 }
 

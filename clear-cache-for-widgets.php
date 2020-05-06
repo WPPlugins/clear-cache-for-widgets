@@ -5,11 +5,11 @@ Plugin URI: https://webheadcoder.com/clear-cache-for-me/
 Description: Purges all cache on WPEngine, W3 Total Cache, WP Super Cache, WP Fastest Cache when updating widgets, menus, settings.  Forces a browser to reload a theme's CSS and JS files.
 Author: Webhead LLC
 Author URI: https://webheadcoder.com 
-Version: 1.3
+Version: 1.4
 */
 
 
-define( 'CCFM_VERSION', '1.3' );
+define( 'CCFM_VERSION', '1.4' );
 define( 'CCFM_PLUGIN', __FILE__ );
 
 require_once( 'clear-cache-for-action.php' );
@@ -95,6 +95,13 @@ function ccfm_admin_init() {
         //detect Contact Form by WP Forms changes
         add_action( 'wpforms_builder_save_form', 'ccfm_clear_cache_for_wpforms' );
 
+        if ( ccfm_option( 'btn_admin_bar', 1 ) == 1 ) {
+            $needed_cap = ccfm_option( 'btn_cap', 'manage_options' );
+            if ( current_user_can( $needed_cap ) || current_user_can( 'manage_options' ) ) {
+                add_action( 'admin_bar_menu', 'ccfm_toolbar_link', 999 );
+            }
+        }
+
         do_action( 'ccfm_admin_init' );
     }
 }
@@ -141,6 +148,15 @@ function ccfm_get_caching_system_used() {
     else if ( class_exists( 'Breeze_Admin' ) ) {
         $cache_system_key = 'breeze';
     }
+    else if ( class_exists( 'LiteSpeed_Cache_Purge' ) ) {
+        $cache_system_key = 'litespeed';
+    }
+    else if ( function_exists( 'sg_cachepress_purge_cache' ) ) {
+        $cache_system_key = 'siteground';
+    }
+    else if ( class_exists( 'autoptimizeCache' ) ) {
+        $cache_system_key = 'autooptimize';
+    }
     return $cache_system_key;
 }
 
@@ -176,6 +192,15 @@ function ccfm_get_cache_system_name( $cache_system_key = '' ) {
             break;
         case 'breeze':
             $cache_name = 'Breeze';
+            break;
+        case 'litespeed':
+            $cache_name = 'LiteSpeed Cache';
+            break;
+        case 'siteground':
+            $cache_name = 'SiteGround SuperCacher';
+            break;
+        case 'autooptimize':
+            $cache_name = 'Autoptimize';
             break;
         default:
             break;
@@ -243,6 +268,18 @@ function ccfm_clear_cache_for_me( $source ) {
     }
     else if ( class_exists( 'Breeze_Admin' ) && !empty( $admin ) && ( $admin instanceof Breeze_Admin ) ) {
         $admin->breeze_clear_all_cache();
+    }
+    else if ( class_exists( 'LiteSpeed_Cache_Purge' ) ) {
+        LiteSpeed_Cache_Purge::purge_all( 'Clear Cache For Me' );
+    }
+    else if ( function_exists( 'sg_cachepress_purge_cache' ) ) {
+        sg_cachepress_purge_cache();
+    }
+    else if ( function_exists( 'sg_cachepress_purge_cache' ) ) {
+        sg_cachepress_purge_cache();
+    }
+    else if ( class_exists( 'autoptimizeCache' ) ) {
+        autoptimizeCache::clearall();
     }
     do_action( 'ccfm_clear_cache_for_me', $source );
 
@@ -342,7 +379,7 @@ function ccfm_admin_head() {
  * Clear the cache if requested.
  */
 function ccfm_handle_requests() {
-    if ( isset( $_POST['ccfm'] ) ) {
+    if ( isset( $_REQUEST['ccfm'] ) ) {
         check_admin_referer( 'ccfm' );
         $needed_cap = ccfm_option( 'btn_cap', 'manage_options' );
         $is_success = 0;
@@ -436,8 +473,12 @@ function ccfm_custom_src_key( $src ) {
 function ccfm_show_src_version ( $src, $handle ) {
     $key = ccfm_custom_src_key( $src );
     $timestamp = get_option( '_ccfm_style_timestamp_' . $key, '' );
-    if ( empty( $timestamp ) ) {
+    $dev_mode_assets = ccfm_option( 'dev_mode_assets', 0 );
+    if ( empty( $timestamp ) && $dev_mode_assets == 0 ) {
         return $src;
+    }
+    if ( $dev_mode_assets == 1 ) {
+        $timestamp = time();
     }
     $src_parts = explode( '?', $src );
     if ( count( $src_parts ) > 1 ) {
@@ -460,7 +501,7 @@ function ccfm_option($name, $default='', $options = false) {
         $options = get_option( 'ccfm_options' );
     }
 
-    if (!empty($options) && !empty($options[$name])) {
+    if (!empty($options) && isset($options[$name])) {
         $ret = $options[$name];
     }
     else {
@@ -468,3 +509,20 @@ function ccfm_option($name, $default='', $options = false) {
     }
     return $ret;
 }
+
+/**
+ * add a link to the WP Toolbar
+ */
+function ccfm_toolbar_link( $wp_admin_bar ) {
+    $url = add_query_arg( '_wpnonce', wp_create_nonce( 'ccfm' ), admin_url() . '?ccfm=1' );
+    $args = array(
+        'id' => 'ccfm-link',
+        'title' => 'Clear Cache For Me', 
+        'href' => $url, 
+        'meta' => array(
+            'title' => 'Clear Cache For Me'
+        )
+    );
+    $wp_admin_bar->add_node( $args );
+}
+

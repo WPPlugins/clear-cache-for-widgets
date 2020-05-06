@@ -3,8 +3,8 @@ Contributors: webheadllc
 Donate link: https://webheadcoder.com/donate-clear-cache-for-me
 Tags: wpengine, cache, clear, purge, js, css, widget
 Requires at least: 3.8
-Tested up to: 5.3.2
-Stable tag: 1.3
+Tested up to: 5.4
+Stable tag: 1.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -20,14 +20,18 @@ The popular Qode themes has a options to set your own custom CSS and JS.  Someti
 
 Works with the following caching systems:
 
-* W3 Total Cache
-* WP Super Cache
-* WP Fastest Cache
-* WPEngine Cache
-* Kinsta Cache
-* GoDaddy Cache
-* WP Optimize Cache
+* Autoptimize
 * Breeze Cache
+* GoDaddy Cache
+* Kinsta Cache
+* LiteSpeed Cache
+* SiteGround SuperCacher
+* WP Fastest Cache
+* WP Super Cache
+* WP Optimize Cache
+* W3 Total Cache
+* WPEngine Cache
+
 
 Clears all cache for following actions:
 
@@ -50,6 +54,13 @@ Clears all cache for following actions:
 1. The button on the dashboard.  
 
 == Changelog ==
+
+= 1.4 =
+Added cache clearing for LiteSpeed Cache.  
+Added cache clearing for SiteGround SuperCacher.  
+Added cache clearing for Autoptimize.  
+Added Clear Cache For Me button in admin bar.  
+Added Development Mode to always load a fresh copy of javascript and stylesheet files.  
 
 = 1.3 =
 Added cache clearing for Breeze cache.
@@ -145,67 +156,20 @@ Use this action to clear cache from an unsupported caching system before the def
 Use this action to clear cache from an unsupported caching system after the default caching systems clear their cache.
 
 
-= Example 1 = 
-Thanks to Benjamin Pick - If you are using Autoptimize and need to clear the CSS or JS files automatically, you can add the code below to your theme's functions.php file.  This code also demonstrates how you can add an unsupported caching system and have its cache cleared for you.  
-https://gist.github.com/benjaminpick/94b487ce995454797143  
-also pasted below:  
+= Example = 
+If you were using an unsupported caching system you'll need to identify the caching plugin's class or function which clears the cache.  As an example, if the unsupported caching system called the `MyOtherCache::clear_all()` function, you would use the following code to get this plugin to clear the cache.
 
 `<?php
-function yt_cache_enable($return) {
-    if (class_exists('autoptimizeCache'))
+function my_other_cache_enable( $return = false ) {
+    if ( class_exists( 'MyOtherCache' ) )
         return true;
     return $return;
 }
-add_filter('ccfm_supported_caching_exists', 'yt_cache_enable');
+add_filter('ccfm_supported_caching_exists', 'my_other_cache_enable');
 
-function yt_cache_clear() {
-    if (class_exists('autoptimizeCache'))
-        autoptimizeCache::clearall();
+function my_other_cache_clear() {
+    if ( my_other_cache_enable() )
+        MyOtherCache::clear_all();
 }
-add_action('ccfm_clear_cache_for_me', 'yt_cache_clear');`
+add_action('ccfm_clear_cache_for_me', 'my_other_cache_clear');`
 
-
-Similarly, if you are using the LiteSpeed Cache plugin, you can add the following (untested) code.  I don't have a LiteSpeed server so I'm unable to verify this actually works.
-
-`<?php
-function my_lt_cache_enable( $return = false ) {
-    if ( class_exists( 'LiteSpeed_Cache_Purge' ) )
-        return true;
-    return $return;
-}
-add_filter('ccfm_supported_caching_exists', 'my_lt_cache_enable');
-
-function my_lt_cache_clear() {
-    if ( my_lt_cache_enable() )
-        LiteSpeed_Cache_Purge::purge_all( 'Clear Cache For Me' );
-}
-add_action('ccfm_clear_cache_for_me', 'my_lt_cache_clear');`
-
-
-= Example 2 =
-Thanks to Benjamin Pick - If you have an automatic deployment setup and need a webhook to clear the caches, you can add this code to your theme's functions.php file.  
-https://gist.github.com/benjaminpick/67b6b9a49ef7991172f9  
-also pasted below:  
-
-`<?php
-if (!defined('CLEAR_CACHE_HOOK_KEY')) {
-    define('CLEAR_CACHE_HOOK_KEY', 'some_secret_key_please');
-}
-function yt_cache_clear_web_hook() {
-    if (isset($_GET['key']) && $_GET['key'] == CLEAR_CACHE_HOOK_KEY) {
-        if (function_exists('ccfm_clear_cache_for_me')) {
-            ccfm_clear_cache_for_me( 'ajax' );
-            echo 'Cache was cleared.';
-        } else {
-            echo 'Install the plugin "Clear Cache For Me" first';
-        }
-        exit;
-    }
-}
-
-// Call this URL to clear the cache:
-// /wp-admin/admin-ajax.php?action=clear_cache&key=some_secret_key_please
-
-add_action( 'wp_ajax_clear_cache', 'yt_cache_clear_web_hook' );
-add_action( 'wp_ajax_nopriv_clear_cache', 'yt_cache_clear_web_hook' );
-`
