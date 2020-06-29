@@ -3,8 +3,8 @@ Contributors: webheadllc
 Donate link: https://webheadcoder.com/donate-clear-cache-for-me
 Tags: wpengine, cache, clear, purge, js, css, widget
 Requires at least: 3.8
-Tested up to: 5.4
-Stable tag: 1.4
+Tested up to: 5.4.2
+Stable tag: 1.4.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -54,6 +54,11 @@ Clears all cache for following actions:
 1. The button on the dashboard.  
 
 == Changelog ==
+
+= 1.4.1 =
+Updated Clear Cache For Me button in admin bar.  
+Updated clearing WP Fastest Cache to include clearing minified cache.  
+(thanks to Ov3rfly)  
 
 = 1.4 =
 Added cache clearing for LiteSpeed Cache.  

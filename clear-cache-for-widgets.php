@@ -5,11 +5,11 @@ Plugin URI: https://webheadcoder.com/clear-cache-for-me/
 Description: Purges all cache on WPEngine, W3 Total Cache, WP Super Cache, WP Fastest Cache when updating widgets, menus, settings.  Forces a browser to reload a theme's CSS and JS files.
 Author: Webhead LLC
 Author URI: https://webheadcoder.com 
-Version: 1.4
+Version: 1.4.1
 */
 
 
-define( 'CCFM_VERSION', '1.4' );
+define( 'CCFM_VERSION', '1.4.1' );
 define( 'CCFM_PLUGIN', __FILE__ );
 
 require_once( 'clear-cache-for-action.php' );
@@ -95,12 +95,6 @@ function ccfm_admin_init() {
         //detect Contact Form by WP Forms changes
         add_action( 'wpforms_builder_save_form', 'ccfm_clear_cache_for_wpforms' );
 
-        if ( ccfm_option( 'btn_admin_bar', 1 ) == 1 ) {
-            $needed_cap = ccfm_option( 'btn_cap', 'manage_options' );
-            if ( current_user_can( $needed_cap ) || current_user_can( 'manage_options' ) ) {
-                add_action( 'admin_bar_menu', 'ccfm_toolbar_link', 999 );
-            }
-        }
 
         do_action( 'ccfm_admin_init' );
     }
@@ -114,6 +108,13 @@ function ccfm_init_actions() {
     //detect WooCommerce settings changes
     add_action( 'woocommerce_settings_saved', 'ccfm_clear_cache_for_woocommerce');
     
+    if ( ccfm_option( 'btn_admin_bar', 1 ) == 1 ) {
+        $needed_cap = ccfm_option( 'btn_cap', 'manage_options' );
+        if ( current_user_can( $needed_cap ) || current_user_can( 'manage_options' ) ) {
+            add_action( 'admin_bar_menu', 'ccfm_toolbar_link', 99 );
+        }
+    }
+
     do_action( 'ccfm_init_actions' );
 }
 add_action( 'init', 'ccfm_init_actions' );
@@ -250,7 +251,7 @@ function ccfm_clear_cache_for_me( $source ) {
         }
     }
     else if ( method_exists( 'WpFastestCache', 'deleteCache' ) && !empty( $wp_fastest_cache ) ) {
-        $wp_fastest_cache->deleteCache();
+        $wp_fastest_cache->deleteCache( true );
     }
     else if ( class_exists( '\Kinsta\Cache' ) && !empty( $kinsta_cache ) ) {
         $kinsta_cache->kinsta_cache_purge->purge_complete_caches();
@@ -517,11 +518,8 @@ function ccfm_toolbar_link( $wp_admin_bar ) {
     $url = add_query_arg( '_wpnonce', wp_create_nonce( 'ccfm' ), admin_url() . '?ccfm=1' );
     $args = array(
         'id' => 'ccfm-link',
-        'title' => 'Clear Cache For Me', 
-        'href' => $url, 
-        'meta' => array(
-            'title' => 'Clear Cache For Me'
-        )
+        'title' => _x( 'Clear Cache For Me', 'Button in admin bar', 'ccfm' ),
+        'href' => $url
     );
     $wp_admin_bar->add_node( $args );
 }
