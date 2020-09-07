@@ -3,8 +3,8 @@ Contributors: webheadllc
 Donate link: https://webheadcoder.com/donate-clear-cache-for-me
 Tags: wpengine, cache, clear, purge, js, css, widget
 Requires at least: 3.8
-Tested up to: 5.4.2
-Stable tag: 1.4.1
+Tested up to: 5.5
+Stable tag: 1.5
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +22,7 @@ Works with the following caching systems:
 
 * Autoptimize
 * Breeze Cache
+* Cache Enabler
 * GoDaddy Cache
 * Kinsta Cache
 * LiteSpeed Cache
@@ -33,7 +34,7 @@ Works with the following caching systems:
 * WPEngine Cache
 
 
-Clears all cache for following actions:
+Clears all cache for following actions (requires a caching system above to be active):
 
 * When Widgets are saved
 * When Customizer is saved
@@ -54,6 +55,11 @@ Clears all cache for following actions:
 1. The button on the dashboard.  
 
 == Changelog ==
+
+= 1.5 =
+Updated admin bar link to clear cache in place.  
+Added cache clearing support for Cache Enabler.  
+Fixed cache clearing for Breeze.  
 
 = 1.4.1 =
 Updated Clear Cache For Me button in admin bar.  

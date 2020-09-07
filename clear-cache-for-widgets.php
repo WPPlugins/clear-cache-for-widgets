@@ -5,11 +5,11 @@ Plugin URI: https://webheadcoder.com/clear-cache-for-me/
 Description: Purges all cache on WPEngine, W3 Total Cache, WP Super Cache, WP Fastest Cache when updating widgets, menus, settings.  Forces a browser to reload a theme's CSS and JS files.
 Author: Webhead LLC
 Author URI: https://webheadcoder.com 
-Version: 1.4.1
+Version: 1.5
 */
 
 
-define( 'CCFM_VERSION', '1.4.1' );
+define( 'CCFM_VERSION', '1.5' );
 define( 'CCFM_PLUGIN', __FILE__ );
 
 require_once( 'clear-cache-for-action.php' );
@@ -119,6 +119,24 @@ function ccfm_init_actions() {
 }
 add_action( 'init', 'ccfm_init_actions' );
 
+/**
+ * Enqueue script for admin bar.
+ */
+function ccfm_enqueue_admin_bar_scripts() {
+    wp_enqueue_script( 
+        'ccfm-admin-bar', 
+        plugins_url( '/js/admin-bar.js', CCFM_PLUGIN ),
+        array( 'admin-bar' ), 
+        CCFM_VERSION, 
+        true
+    );
+    wp_localize_script( 'ccfm-admin-bar', 'ccfm', array( 
+        'ajax_url' => admin_url( 'admin-ajax.php' ),
+        'nonce'    => wp_create_nonce( 'ccfm' ),
+    ) );
+}
+add_action( 'wp_enqueue_scripts', 'ccfm_enqueue_admin_bar_scripts' );
+add_action( 'admin_enqueue_scripts', 'ccfm_enqueue_admin_bar_scripts' );
 
 /**
  * Return the first caching system found.
@@ -157,6 +175,9 @@ function ccfm_get_caching_system_used() {
     }
     else if ( class_exists( 'autoptimizeCache' ) ) {
         $cache_system_key = 'autooptimize';
+    }
+    else if ( class_exists( 'Cache_Enabler' ) ) {
+        $cache_system_key = 'cacheenabler';
     }
     return $cache_system_key;
 }
@@ -202,6 +223,9 @@ function ccfm_get_cache_system_name( $cache_system_key = '' ) {
             break;
         case 'autooptimize':
             $cache_name = 'Autoptimize';
+            break;
+        case 'cacheenabler':
+            $cache_name = 'Cache Enabler';
             break;
         default:
             break;
@@ -267,8 +291,8 @@ function ccfm_clear_cache_for_me( $source ) {
             $wpoptimize_cache_commands->purge_page_cache();
         }
     }
-    else if ( class_exists( 'Breeze_Admin' ) && !empty( $admin ) && ( $admin instanceof Breeze_Admin ) ) {
-        $admin->breeze_clear_all_cache();
+    else if ( class_exists( 'Breeze_Admin' ) ) {
+        do_action('breeze_clear_all_cache');
     }
     else if ( class_exists( 'LiteSpeed_Cache_Purge' ) ) {
         LiteSpeed_Cache_Purge::purge_all( 'Clear Cache For Me' );
@@ -281,6 +305,9 @@ function ccfm_clear_cache_for_me( $source ) {
     }
     else if ( class_exists( 'autoptimizeCache' ) ) {
         autoptimizeCache::clearall();
+    }
+    else if ( class_exists( 'Cache_Enabler' ) ) {
+        Cache_Enabler::clear_total_cache();
     }
     do_action( 'ccfm_clear_cache_for_me', $source );
 
@@ -523,4 +550,23 @@ function ccfm_toolbar_link( $wp_admin_bar ) {
     );
     $wp_admin_bar->add_node( $args );
 }
+
+/**
+ * Return the options for the school dropdown.
+ */
+function ccfm_ajax_ccfm() {
+    if ( !check_ajax_referer( 'ccfm', 'nonce', false ) ){
+        wp_die( 'The url you are trying to reach is no longer valid.', 401);
+    }
+    $needed_cap = ccfm_option( 'btn_cap', 'manage_options' );
+    $is_success = false;
+    if ( current_user_can( $needed_cap ) || current_user_can( 'manage_options' ) ) {
+        ccfm_clear_cache_for_me( 'admin-bar-button' );
+        $is_success = true;
+    }
+
+    wp_send_json( ['success' => $is_success ] );
+}
+add_action( 'wp_ajax_ccfm-ajax-ccfm', 'ccfm_ajax_ccfm' );
+
 

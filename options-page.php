@@ -38,9 +38,10 @@ function ccfm_hosting_notice_response() {
     if ( !is_array( $stats ) ) {
         $stats = array();
     }
-    $stats['hosting_notice'] = 1;
 
-    update_option( '_ccfm_stats', $stats );
+    set_transient( 'ccfm_hosting_notice', 1, YEAR_IN_SECONDS / 2 );
+    // $stats['hosting_notice'] = 1;
+    // update_option( '_ccfm_stats', $stats );
     wp_send_json( 1 );
 }
 add_action('wp_ajax_ccfm-notice-response', 'ccfm_hosting_notice_response');
@@ -95,14 +96,21 @@ function ccfm_options_do_page() {
         .ccfm-settings a .dashicons {
             text-decoration: none;
         }
+        .ccfm-notice-hosting {
+            position: relative;
+        }
+        .notice-dismiss:before {
+            display: none;
+        }
 
 
     </style>
     <div class="ccfm-settings wrap">
         <h2><?php _e( 'Clear Cache for Me Settings', 'ccfm' ); ?></h2>
         <?php if ( ccfm_show_hosting_notice() ) : ?>
-        <div class="notice notice-info is-dismissible ccfm-notice-hosting"> 
+        <div class="notice notice-info ccfm-notice-hosting"> 
             <p>If you're looking for a fast webhost, you may want to consider <a href="https://webheadcoder.com/cloud-web-hosts/" target="_blank">managed hosts using cloud services</a>.</p>
+            <a href="#" class="notice-dismiss">Dismiss for 6 months</a>
         </div>
         <?php endif; ?>
 
@@ -233,6 +241,11 @@ function ccfm_show_hosting_notice() {
     if ( !empty( $stats['hosting_notice'] ) ) {
         return false;
     }
+
+    if ( !empty( get_transient( 'ccfm_hosting_notice ' ) ) ) {
+        return false;
+    }
+
     $cache_system_key = ccfm_get_caching_system_used();
     if ( $cache_system_key == 'kinsta' || $cache_system_key == 'wpengine' || $cache_system_key == 'breeze' ) {
         return false;
