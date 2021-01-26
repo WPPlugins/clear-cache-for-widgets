@@ -3,8 +3,8 @@ Contributors: webheadllc
 Donate link: https://webheadcoder.com/donate-clear-cache-for-me
 Tags: wpengine, cache, clear, purge, js, css, widget
 Requires at least: 3.8
-Tested up to: 5.5
-Stable tag: 1.5
+Tested up to: 5.6
+Stable tag: 1.5.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -55,6 +55,9 @@ Clears all cache for following actions (requires a caching system above to be ac
 1. The button on the dashboard.  
 
 == Changelog ==
+
+= 1.5.1 =
+Remove ajax from admin bar when jQuery is not available.  
 
 = 1.5 =
 Updated admin bar link to clear cache in place.  
