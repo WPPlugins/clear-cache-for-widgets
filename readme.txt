@@ -1,14 +1,14 @@
 === Clear Cache for Me ===
 Contributors: webheadllc
 Donate link: https://webheadcoder.com/donate-clear-cache-for-me
-Tags: wpengine, cache, clear, purge, js, css, widget
+Tags: cache, clear, purge, js, css
 Requires at least: 3.8
-Tested up to: 5.8
-Stable tag: 1.6
+Tested up to: 7.0
+Stable tag: 2.5
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-Purges all cache on WPEngine, W3 Total Cache, WP Super Cache, WP Fastest Cache when updating widgets, menus, settings.  Forces a browser to reload CSS and JS files.
+Purges cache on WPEngine, W3TC, WP Super Cache, WP Fastest Cache when widgets, menus, settings update.  Forces browsers to reload CSS and JS files.
 
 == Description ==
 
@@ -18,27 +18,33 @@ In addition to clearing those pesky caching engines, Clear Cache for Me can forc
 
 The popular Qode themes has a options to set your own custom CSS and JS.  Sometimes you may not see your changes for a long while because your browser is trying to get the cached file.  Whenever you save your Qode's options, the CSS and JS files will be forced to reload in the browser on the public side.
 
-Works with the following caching systems:
+Works with the following caching plugins:
 
 * Autoptimize
 * Breeze Cache
 * Cache Enabler
+* Cloudflare
 * GoDaddy Cache
 * Kinsta Cache
 * LiteSpeed Cache
+* Elementor (CSS cache)
+* Premium Addons for Elementor
 * SiteGround SuperCacher
+* Super Page Cache
 * WP Fastest Cache
-* WP Super Cache
 * WP Optimize Cache
+* WP Rocket
+* WP Super Cache
 * W3 Total Cache
 * WPEngine Cache
 
 
 Clears all cache for following actions (requires a caching system above to be active):
 
-* When Widgets are saved
-* When Customizer is saved
-* When Menus are saved
+* When Widgets are saved.
+* When Customizer is saved.
+* When Menus are saved.
+* When a fields in Advanced Custom Fields are saved.
 * When a Contact Form 7 form is saved.
 * When a Formidable Form form is saved.
 * When WooThemes settings are saved.
@@ -50,14 +56,56 @@ Clears all cache for following actions (requires a caching system above to be ac
 * When Settings from a settings page is saved.  This includes settings from WordPress core, Yoast SEO, and most other plugins using the Settings API.
 * When WordPress is updated.
 * When plugins are updated, activated, and deactivated.
+* When WordPress, plugins, and themes are automaticallly updated.
 
 [See the plugin's homepage for more details](https://webheadcoder.com/clear-cache-for-me/).
+
+Note:  Since some caching systems run in the `shutdown` hook, this plugin also runs in that hook.  This means if PHP does not have enough time, some code including any hooks within the `ccfm_clear_cache_for_all()` function are not guaranteed to run.  If you need code to run, consider using the `ccfm_clear_cache_for_me_setup` hook.  
+
+Some plugins may have "auto purge" (like Cloudflare), but it doesn't cover all the items this plugin covers.
 
 == Screenshots ==
 
 1. The button on the dashboard.  
 
 == Changelog ==
+
+= 2.4.2 =
+Updated cache clearing function call for WPEngine.  
+
+= 2.4.1 =
+Redeploying.  
+
+= 2.4 =
+Added cache clearing for Super Page Cache.  
+
+= 2.3 =
+Updated Clear Cache for Me on dashboard.  
+Added option to exclude cache clearing for theme's CSS and JS assets.  
+
+= 2.2 =
+Added cache clearing when automatic updates complete.  
+
+= 2.1.1 = 
+Fixed "Edit with Elementor" in toolbar not working.  
+Fixed settings page so "WP Optimize" shows correctly when being used.  
+
+= 2.1 =
+Added CSS cache clearing for Elementor.  (thanks to @ronr1999!)
+
+= 2.0.1 =
+Fixed WP Rocket cache clearing.  (thanks to @deargeek!)  
+
+= 2.0 =
+Added cache clearing for additional plugins that save their own cache.  
+Added cache clearing for WP Rocket.  
+Organized code.  
+
+= 1.8 =
+Updated cache clearing for LiteSpeed Cache.  
+
+= 1.7 =
+Added cache clearing when fields in Advanced Custom Fields are updated.  
 
 = 1.6 =
 Added cache clearing when WordPress core is updated.

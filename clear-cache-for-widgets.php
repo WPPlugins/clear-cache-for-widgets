@@ -2,16 +2,17 @@
 /*
 Plugin Name: Clear Cache For Me
 Plugin URI: https://webheadcoder.com/clear-cache-for-me/
-Description: Purges all cache on WPEngine, W3 Total Cache, WP Super Cache, WP Fastest Cache when updating widgets, menus, settings.  Forces a browser to reload a theme's CSS and JS files.
+Description: Purges all cache on WPEngine, W3 Total Cache, WP Super Cache, WP Fastest Cache when updating widgets, menus, settings.  Can force a browser to reload a theme's CSS and JS files.
 Author: Webhead LLC
 Author URI: https://webheadcoder.com 
-Version: 1.6
+Version: 2.5
 */
 
 
-define( 'CCFM_VERSION', '1.6' );
+define( 'CCFM_VERSION', '2.5' );
 define( 'CCFM_PLUGIN', __FILE__ );
 
+require_once( 'caching-plugins.php' );
 require_once( 'clear-cache-for-action.php' );
 require_once( 'options-page.php' );
 
@@ -19,25 +20,7 @@ require_once( 'options-page.php' );
 function ccfm_plugins_loaded() {
     load_plugin_textdomain( 'ccfm', false, dirname( plugin_basename( __FILE__ ) ) . '/lang/' );
 
-    $old_permissions = get_option( 'ccfm_permission' );
-    if ( !empty( $old_permissions ) ) {
-        // migrate it to the new options
-        $options = get_option( 'ccfm_options', array() );
-        $options['btn_cap'] = $old_permissions;
-        update_option( 'ccfm_options', $options );
-        delete_option( 'ccfm_permission' );
-    }
-
-    $old_infotext = get_option( 'ccfm_infotext' );
-    if ( !empty( $old_infotext ) ) {
-        // migrate it to the new options
-        $options = get_option( 'ccfm_options', array() );
-        $options['btn_instructions'] = $old_infotext;
-        update_option( 'ccfm_options', $options );
-        delete_option( 'ccfm_infotext' );
-    }
-
-    if ( apply_filters( 'ccfm_clear_cache_on_wp_activity', is_user_logged_in() ) ) {
+    if ( apply_filters( 'ccfm_clear_cache_on_wp_activity', true ) ) {
         add_action( 'activated_plugin', 'ccfm_clear_cache_for_wp_activity' );
         add_action( 'deactivated_plugin', 'ccfm_clear_cache_for_wp_activity' );
         add_action( 'upgrader_process_complete', 'ccfm_clear_cache_for_wp_activity' );
@@ -61,12 +44,14 @@ function ccfm_admin_init() {
     //add styles for dashboard
     add_action( 'admin_head', 'ccfm_admin_head' );
 
-    if ( ccfm_supported_caching_exists() ) {
+    $plugin_slugs = ccfm_clear_addtional_cache( false );
+
+    if ( ccfm_supported_caching_exists() || !empty( $plugin_slugs ) ) {
 
         if ( defined( 'QODE_ROOT' ) ) {
             if ( 'options.php' == $pagenow ) {
                 //detect when qode options saved.
-                add_action( 'updated_option', 'ccfm_save_clear_cache_for_qode', 10, 3 );   
+                // add_action( 'updated_option', 'ccfm_save_clear_cache_for_qode', 10, 3 );   
             }
         }
 
@@ -89,6 +74,16 @@ function ccfm_admin_init() {
         //detect WooThemes settings changes
         add_action( 'update_option_woo_options', 'ccfm_clear_cache_for_woo_options' );
 
+
+        if ( class_exists( 'ACF' ) ) {
+            add_action( 'save_post', 'ccfm_acf_update_fields', 10, 2 );
+        }
+        
+        //detect TablePress changes
+        if ( class_exists( 'TablePress' ) ) {
+            add_action( 'save_post', 'ccfm_tablepress_update_fields', 10, 2 );
+        }
+
         //try detect NextGen Gallery changes
         add_action( 'ngg_update_gallery', 'ccfm_clear_cache_for_ngg' );
         add_action( 'ngg_delete_gallery', 'ccfm_clear_cache_for_ngg' );
@@ -106,6 +101,9 @@ function ccfm_admin_init() {
         add_action( 'update_option_ihaf_insert_header', 'ccfm_insert_headers_and_footers' );
         add_action( 'update_option_ihaf_insert_footer', 'ccfm_insert_headers_and_footers' );
         add_action( 'update_option_ihaf_insert_body', 'ccfm_insert_headers_and_footers' );
+        
+        //trigger functions in supported plugins when Clear Cache button is clicked.
+        add_action( 'ccfm_clear_cache_for_me', 'ccfm_clear_addtional_cache', 1 );
 
         do_action( 'ccfm_admin_init' );
     }
@@ -140,7 +138,7 @@ function ccfm_enqueue_admin_bar_scripts() {
     wp_enqueue_script( 
         'ccfm-admin-bar', 
         plugins_url( '/js/admin-bar.js', CCFM_PLUGIN ),
-        array( 'jquery', 'admin-bar' ), 
+        array( 'jquery' ), 
         CCFM_VERSION, 
         true
     );
@@ -152,100 +150,6 @@ function ccfm_enqueue_admin_bar_scripts() {
 add_action( 'wp_enqueue_scripts', 'ccfm_enqueue_admin_bar_scripts' );
 add_action( 'admin_enqueue_scripts', 'ccfm_enqueue_admin_bar_scripts' );
 
-/**
- * Return the first caching system found.
- */
-function ccfm_get_caching_system_used() {
-    $cache_system_key = '';
-    if ( function_exists( 'w3tc_pgcache_flush' ) ) {
-        $cache_system_key = 'w3tc';
-    }
-    else if ( function_exists( 'wp_cache_clean_cache' ) ) {
-        $cache_system_key = 'wp_cache';
-    }
-    else if ( class_exists( 'WpeCommon' ) ) {
-        $cache_system_key = 'wpengine';
-    }
-    else if ( method_exists( 'WpFastestCache', 'deleteCache' ) ) {
-        $cache_system_key = 'wp_fastest_cache';
-    }
-    else if ( class_exists( '\WPaaS\Cache' ) ) {
-        $cache_system_key = 'godaddy';
-    }
-    else if ( class_exists( 'WP_Optimize' ) && defined( 'WPO_PLUGIN_MAIN_PATH' ) ) {
-        $cache_system_key = 'wp_optimize';
-    }
-    else if ( class_exists( '\Kinsta\Cache' ) ) {
-        $cache_system_key = 'kinsta';
-    }
-    else if ( class_exists( 'Breeze_Admin' ) ) {
-        $cache_system_key = 'breeze';
-    }
-    else if ( class_exists( 'LiteSpeed_Cache_Purge' ) ) {
-        $cache_system_key = 'litespeed';
-    }
-    else if ( function_exists( 'sg_cachepress_purge_cache' ) ) {
-        $cache_system_key = 'siteground';
-    }
-    else if ( class_exists( 'autoptimizeCache' ) ) {
-        $cache_system_key = 'autooptimize';
-    }
-    else if ( class_exists( 'Cache_Enabler' ) ) {
-        $cache_system_key = 'cacheenabler';
-    }
-    return $cache_system_key;
-}
-
-/**
- * Return the caching system name for the key.
- */
-function ccfm_get_cache_system_name( $cache_system_key = '' ) {
-    if ( empty( $cache_system_key ) ) {
-        $cache_system_key = ccfm_get_caching_system_used();
-    }
-    $cache_name = '';
-    switch( $cache_system_key ) {
-        case 'w3tc':
-            $cache_name = 'W3 Total Cache';
-            break;
-        case 'wp_cache':
-            $cache_name = 'WP Super Cache';
-            break;
-        case 'wpengine':
-            $cache_name = 'WPEngine Cache';
-            break;
-        case 'wp_fastest_cache':
-            $cache_name = 'WP Fastest Cache';
-            break;
-        case 'godaddy':
-            $cache_name = 'GoDaddy Cache';
-            break;
-        case 'wp_optimize':
-            $cache_name = 'WP Optimize';
-            break;
-        case 'kinsta':
-            $cache_name = 'Kinsta Cache';
-            break;
-        case 'breeze':
-            $cache_name = 'Breeze';
-            break;
-        case 'litespeed':
-            $cache_name = 'LiteSpeed Cache';
-            break;
-        case 'siteground':
-            $cache_name = 'SiteGround SuperCacher';
-            break;
-        case 'autooptimize':
-            $cache_name = 'Autoptimize';
-            break;
-        case 'cacheenabler':
-            $cache_name = 'Cache Enabler';
-            break;
-        default:
-            break;
-    }
-    return $cache_name;
-}
 
 /**
  * Return true if known caching systems exists.
@@ -266,11 +170,20 @@ function ccfm_clear_cache_for_me( $source ) {
     }
 
     $ccfm_source = $source;
+
+    do_action( 'ccfm_clear_cache_for_me_setup', $source );
+
+    if ( defined( 'LSCWP_V' ) ) {
+        ccfm_clear_cache_for_all();
+        return;
+    }
+
     add_action( 'shutdown', 'ccfm_clear_cache_for_all' );
 }
 
 /**
  * Clear the caches!
+ * Caution:  Any hooks in this function are not guaranteed to run. See notes in readme.
  */
 function ccfm_clear_cache_for_all() {
     global $wp_fastest_cache, $kinsta_cache, $admin, $ccfm_source;
@@ -298,11 +211,15 @@ function ccfm_clear_cache_for_all() {
         if ( method_exists( 'WpeCommon', 'purge_memcached' ) ) {
             WpeCommon::purge_memcached();
         }
-        if ( method_exists( 'WpeCommon', 'clear_maxcdn_cache' ) ) {  
-            WpeCommon::clear_maxcdn_cache();
-        }
         if ( method_exists( 'WpeCommon', 'purge_varnish_cache' ) ) {
             WpeCommon::purge_varnish_cache();   
+        }
+        if ( method_exists( 'WpeCommon', 'clear_cdn_cache' ) ) {  
+            WpeCommon::clear_cdn_cache();
+        }
+        // deprecated
+        else if ( method_exists( 'WpeCommon', 'clear_maxcdn_cache' ) ) {  
+            WpeCommon::clear_maxcdn_cache();
         }
     }
     else if ( method_exists( 'WpFastestCache', 'deleteCache' ) && !empty( $wp_fastest_cache ) ) {
@@ -325,8 +242,8 @@ function ccfm_clear_cache_for_all() {
     else if ( class_exists( 'Breeze_Admin' ) ) {
         do_action('breeze_clear_all_cache');
     }
-    else if ( class_exists( 'LiteSpeed_Cache_Purge' ) ) {
-        LiteSpeed_Cache_Purge::purge_all( 'Clear Cache For Me' );
+    else if ( defined( 'LSCWP_V' ) ) {
+        do_action( 'litespeed_purge_all' );
     }
     else if ( function_exists( 'sg_cachepress_purge_cache' ) ) {
         sg_cachepress_purge_cache();
@@ -337,10 +254,36 @@ function ccfm_clear_cache_for_all() {
     else if ( class_exists( 'Cache_Enabler' ) ) {
         Cache_Enabler::clear_total_cache();
     }
+    else if ( function_exists( 'rocket_clean_domain' ) ) {
+        rocket_clean_domain();
+        if ( function_exists( 'rocket_clean_minify' ) ) {
+            rocket_clean_minify();
+        }
+    }
+    else if ( is_plugin_active( 'wp-cloudflare-page-cache/wp-cloudflare-super-page-cache.php' ) ) {
+        do_action( 'swcfpc_purge_cache' );
+    }
+
+    if ( ccfm_cloudflare_plugin_exists() ) {
+        ccfm_cloudflare_purge_cache();
+    }
+
+    if ( did_action( 'elementor/loaded' ) ) {
+        $elementor_inst = \Elementor\Plugin::instance();
+        if ( !empty( $elementor_inst ) && !empty( $elementor_inst->files_manager ) ) {
+            $elementor_inst->files_manager->clear_cache();
+        }
+    }
+
     do_action( 'ccfm_clear_cache_for_me', $ccfm_source );
 
-    $time = time();
-    update_option( '_ccfm_style_timestamp_theme', $time );
+    $clear_assets = ccfm_option( 'clear_assets', 'only' );
+
+    $time = false;
+    if ( $clear_assets == 'always' ||  ( $clear_assets == 'only' && $ccfm_source == 'admin-bar-button' ) ) {
+        $time = time();
+        update_option( '_ccfm_style_timestamp_theme', $time );
+    }
 
     do_action( 'ccfm_clear_cache_for_css_js', $time );
 }
@@ -359,7 +302,7 @@ function ccfm_dashboard_widget_output() {
     $infotext = ccfm_option( 'btn_instructions', __( 'If you\'re not seeing your changes on your public pages, it might be cached.  Click the button below to see a fresh version of your pages.', 'ccfm' ) );
     ?>
 <div class="ccfm_widget">
-    <form method="post">
+    <form class="ccfm_widget_form" method="post">
         <?php wp_nonce_field( 'ccfm' ); ?>
         <?php echo ( $infotext ) ? '<p class="info">' . $infotext . '</p>' : ''; ?><div class="ccfm-button">
             <input type="submit" name="ccfm" class="button button-primary button-large" value="<?php _e( 'Clear Cache Now!', 'ccfm' ); ?>">
@@ -420,9 +363,19 @@ function ccfm_admin_head() {
 }
 
 #dashboard_ccfm_widget .ccfm-button {
-    display: block;
-    width: 100%;
+    display: inline-block;
+    width: auto;
     text-align: left;
+}
+
+#dashboard_ccfm_widget .ccfm-admin-bar-msg {
+    position: absolute;
+    right: 12px;
+    bottom: 12px;
+    border-radius: 5px;
+    line-height: 32px;
+    width: 135px;
+    text-align: center;
 }
 
 
@@ -530,11 +483,15 @@ function ccfm_show_src_version ( $src, $handle ) {
     $key = ccfm_custom_src_key( $src );
     $timestamp = get_option( '_ccfm_style_timestamp_' . $key, '' );
     $dev_mode_assets = ccfm_option( 'dev_mode_assets', 0 );
+    $clear_assets = ccfm_option( 'clear_assets', 'only' );
     if ( empty( $timestamp ) && $dev_mode_assets == 0 ) {
         return $src;
     }
     if ( $dev_mode_assets == 1 ) {
         $timestamp = time();
+    }
+    if ( empty( $timestamp ) || $clear_assets == 'never' ) {
+        return $src;
     }
     $src_parts = explode( '?', $src );
     if ( count( $src_parts ) > 1 ) {
@@ -580,7 +537,7 @@ function ccfm_toolbar_link( $wp_admin_bar ) {
 }
 
 /**
- * Return the options for the school dropdown.
+ * Return true if user has the right capabilities
  */
 function ccfm_ajax_ccfm() {
     if ( !check_ajax_referer( 'ccfm', 'nonce', false ) ){
@@ -596,5 +553,4 @@ function ccfm_ajax_ccfm() {
     wp_send_json( ['success' => $is_success ] );
 }
 add_action( 'wp_ajax_ccfm-ajax-ccfm', 'ccfm_ajax_ccfm' );
-
 
